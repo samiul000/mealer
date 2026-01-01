@@ -170,7 +170,7 @@
 
     <div class="legend">
       <div class="legend-item"><span class="box off"></span> Off</div>
-      <div class="legend-item"><span class="box on"></span> 0.5+ Meal</div>
+      <div class="legend-item"><span class="box on"></span> On</div>
       <div class="legend-item"><span class="box locked"></span> Locked</div>
     </div>
 
@@ -271,7 +271,7 @@
                 div.addEventListener("click", () => {
                   const input = prompt(
                     "Enter meal count (0 = remove):",
-                    val || 0.5
+                    val || 1
                   );
                   if (input === null) return;
                   const n = parseFloat(input);
@@ -301,3 +301,4 @@
     </script>
   </body>
 </html>
+
