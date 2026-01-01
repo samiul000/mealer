@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meal Management System</title>
+    <style>
+      :root {
+        --bg: #f3f6f9;
+        --card: #fff;
+        --border: #e1e5ea;
+        --primary: #2ecc71;
+        --header: #34495e;
+        --text: #2c3e50;
+        --muted: #7f8c8d;
+        --locked: #eee;
+      }
+      * {
+        box-sizing: border-box;
+        font-family: Segoe UI, Roboto, sans-serif;
+      }
+      body {
+        background: var(--bg);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .month-nav {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+      .month-btn {
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: #fff;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.4rem;
+      }
+      .legend {
+        display: flex;
+        gap: 18px;
+        font-size: 0.85rem;
+        color: var(--muted);
+        margin: 12px 0 16px;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .box {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+      }
+      .box.on {
+        background: var(--primary);
+        border: none;
+      }
+      .box.off {
+        background: #fff;
+      }
+      .box.locked {
+        background: #ddd;
+        border: none;
+      }
+      .table-container {
+        width: 100%;
+        max-width: 1200px;
+        background: var(--card);
+        border-radius: 12px;
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 900px;
+      }
+      th,
+      td {
+        border: 1px solid var(--border);
+        padding: 0;
+        text-align: center;
+      }
+      th {
+        background: var(--header);
+        color: #fff;
+        padding: 10px;
+        font-size: 0.85rem;
+      }
+      th:first-child,
+      td:first-child {
+        position: sticky;
+        left: 0;
+        background: #fff;
+        z-index: 5;
+      }
+      th:first-child {
+        background: var(--header);
+        z-index: 10;
+      }
+      td.name {
+        padding: 10px;
+        text-align: left;
+        font-weight: 600;
+      }
+      td.total {
+        font-weight: 700;
+        background: #fafafa;
+      }
+      .meal-cell {
+        height: 56px;
+        width: 50px;
+        display: flex;
+        flex-direction: column;
+      }
+      .meal {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        cursor: pointer;
+        user-select: none;
+        color: #bbb;
+      }
+      .meal:first-child {
+        border-bottom: 1px dashed #eee;
+      }
+      .meal.active {
+        background: var(--primary);
+        color: #fff;
+        font-weight: 700;
+      }
+      .meal.locked {
+        background: var(--locked);
+        color: #aaa;
+        cursor: not-allowed;
+      }
+      .meal .count {
+        font-size: 0.65rem;
+        opacity: 0.9;
+      }
+      @media (max-width: 768px) {
+        h1 {
+          font-size: 1.2rem;
+        }
+        .legend {
+          flex-wrap: wrap;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="month-nav">
+      <button class="month-btn" onclick="changeMonth(-1)">◀</button>
+      <h1 id="title"></h1>
+      <button class="month-btn" onclick="changeMonth(1)">▶</button>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="box off"></span> Off</div>
+      <div class="legend-item"><span class="box on"></span> 0.5+ Meal</div>
+      <div class="legend-item"><span class="box locked"></span> Locked</div>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr id="head">
+            <th>Member</th>
+          </tr>
+        </thead>
+        <tbody id="body"></tbody>
+      </table>
+    </div>
+
+    <script>
+      const members = [
+        "John Doe",
+        "Jane Smith",
+        "Mike Ross",
+        "Sarah Connor",
+        "Bruce Wayne",
+        "Clark Kent",
+        "Tony Stark",
+        "Peter Parker",
+        "Natasha R.",
+      ];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      let viewYear = today.getFullYear(),
+        viewMonth = today.getMonth();
+      const daysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
+      const key = (m, d, t) => `meal_${viewYear}_${viewMonth}_${m}_${d}_${t}`;
+      const isLocked = (d) => new Date(viewYear, viewMonth, d) < today;
+
+      function changeMonth(delta) {
+        viewMonth += delta;
+        if (viewMonth < 0) {
+          viewMonth = 11;
+          viewYear--;
+        }
+        if (viewMonth > 11) {
+          viewMonth = 0;
+          viewYear++;
+        }
+        render();
+      }
+
+      function render() {
+        document.getElementById("title").innerText = `${new Date(
+          viewYear,
+          viewMonth
+        ).toLocaleString("default", { month: "long" })} ${viewYear}`;
+        const head = document.getElementById("head"),
+          body = document.getElementById("body");
+        head.innerHTML = "<th>Member</th>";
+        body.innerHTML = "";
+        const days = daysInMonth(viewYear, viewMonth);
+        for (let d = 1; d <= days; d++) {
+          const th = document.createElement("th");
+          th.innerText = d;
+          head.appendChild(th);
+        }
+        const thT = document.createElement("th");
+        thT.innerText = "Total";
+        head.appendChild(thT);
+
+        members.forEach((name, m) => {
+          const tr = document.createElement("tr");
+          const tdName = document.createElement("td");
+          tdName.className = "name";
+          tdName.innerText = name;
+          tr.appendChild(tdName);
+          let total = 0;
+
+          for (let d = 1; d <= days; d++) {
+            const td = document.createElement("td");
+            const cell = document.createElement("div");
+            cell.className = "meal-cell";
+
+            ["lunch", "dinner"].forEach((type) => {
+              const div = document.createElement("div");
+              div.className = "meal";
+              div.innerHTML = `<span>${type === "lunch" ? "L" : "D"}</span>`;
+              const k = key(m, d, type);
+              const val = parseFloat(localStorage.getItem(k) || "0");
+              if (val > 0) {
+                div.classList.add("active");
+                div.innerHTML = `<span>${
+                  type === "lunch" ? "L" : "D"
+                }</span><div class="count">${val}</div>`;
+                total += val;
+              }
+
+              if (isLocked(d)) {
+                div.classList.add("locked");
+              } else {
+                // single tap = open popup
+                div.addEventListener("click", () => {
+                  const input = prompt(
+                    "Enter meal count (0 = remove):",
+                    val || 0.5
+                  );
+                  if (input === null) return;
+                  const n = parseFloat(input);
+                  if (isNaN(n) || n < 0) return;
+                  if (n === 0) localStorage.removeItem(k);
+                  else localStorage.setItem(k, String(n));
+                  render();
+                });
+              }
+
+              cell.appendChild(div);
+            });
+
+            td.appendChild(cell);
+            tr.appendChild(td);
+          }
+
+          const tdTotal = document.createElement("td");
+          tdTotal.className = "total";
+          tdTotal.innerText = total;
+          tr.appendChild(tdTotal);
+          body.appendChild(tr);
+        });
+      }
+
+      render();
+    </script>
+  </body>
+</html>
