@@ -173,6 +173,11 @@
       <div class="legend-item"><span class="box on"></span> On</div>
       <div class="legend-item"><span class="box locked"></span> Locked</div>
     </div>
+    <div class="legend-item">
+      <span>
+        দুপুরের খাবার রাত ১২ টা এবং রাতের খাবার বিকাল ৩টার মধ্যে সেট করতে হবে
+      </span>
+    </div>
 
     <div class="table-container">
       <table>
@@ -187,15 +192,15 @@
 
     <script>
       const members = [
-        "John Doe",
-        "Jane Smith",
-        "Mike Ross",
-        "Sarah Connor",
-        "Bruce Wayne",
-        "Clark Kent",
-        "Tony Stark",
-        "Peter Parker",
-        "Natasha R.",
+        "Bipul vai",
+        "Samiul",
+        "Mugdho",
+        "Rahat",
+        "Raiyean",
+        "Ozaer",
+        "Tanvir",
+        "Mehrab",
+        "Azizul",
       ];
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -203,7 +208,41 @@
         viewMonth = today.getMonth();
       const daysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
       const key = (m, d, t) => `meal_${viewYear}_${viewMonth}_${m}_${d}_${t}`;
-      const isLocked = (d) => new Date(viewYear, viewMonth, d) < today;
+
+      // Function to determine if a meal box should be locked
+      function isLockedMeal(d, type) {
+        const now = new Date();
+        const boxDate = new Date(viewYear, viewMonth, d);
+        boxDate.setHours(23, 59, 59, 999); // end of that day
+
+        // Past days are locked
+        if (boxDate < today) return true;
+
+        // Today: apply time windows
+        const isToday =
+          d === today.getDate() &&
+          viewMonth === today.getMonth() &&
+          viewYear === today.getFullYear();
+        if (isToday) {
+          const currentTime = now.getHours() * 60 + now.getMinutes(); // in minutes
+
+          if (type === "dinner") {
+            // 6:00AM to 3:00PM
+            const start = 6 * 60; // 6:00 AM
+            const end = 15 * 60; // 3:00 PM
+            return !(currentTime >= start && currentTime <= end);
+          }
+
+          if (type === "lunch") {
+            // 6:00PM to 11:59PM
+            const start = 18 * 60; // 6:00 PM
+            const end = 23 * 60 + 59; // 11:59 PM
+            return !(currentTime >= start && currentTime <= end);
+          }
+        }
+
+        return false; // future days are editable
+      }
 
       function changeMonth(delta) {
         viewMonth += delta;
@@ -264,10 +303,9 @@
                 total += val;
               }
 
-              if (isLocked(d)) {
+              if (isLockedMeal(d, type)) {
                 div.classList.add("locked");
               } else {
-                // single tap = open popup
                 div.addEventListener("click", () => {
                   const input = prompt(
                     "Enter meal count (0 = remove):",
@@ -301,4 +339,3 @@
     </script>
   </body>
 </html>
-
